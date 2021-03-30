@@ -4,11 +4,14 @@ import android.graphics.Color;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +28,8 @@ public class FineDustFragment extends Fragment implements FineDustContract.View 
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private FineDustPresenter mPresenter;
     private FineDustRepository mRepository;
+    private ImageView mDustImageView;
+    private LinearLayout mDustLayout;
 
 
     public static FineDustFragment newInstance(double lat, double lng){
@@ -59,6 +64,8 @@ public class FineDustFragment extends Fragment implements FineDustContract.View 
         mLocationTextView = view.findViewById(R.id.result_location_text);
         mTimeTextView = view.findViewById(R.id.result_time_text);
         mDustTextView = view.findViewById(R.id.result_dust_text);
+        mDustImageView = view.findViewById(R.id.result_dust_image);
+        mDustLayout = view.findViewById(R.id.dust_linear_layout);
 
         if (savedInstanceState != null){
             // 복원
@@ -90,12 +97,53 @@ public class FineDustFragment extends Fragment implements FineDustContract.View 
     @Override
     public void showFineDustResult(FineDust finedust) {
 
-        // 결과 보여주기
-        String location = finedust.getData().getCountry() + ", " + finedust.getData().getState() + ", " + finedust.getData().getCity();
-        mLocationTextView.setText(location);
+        if (finedust.getData() != null){
+            // 결과 보여주기
+            String location = finedust.getData().getCountry() + ", " + finedust.getData().getState() + ", " + finedust.getData().getCity();
+            mLocationTextView.setText(location);
 
-        mTimeTextView.setText(finedust.getData().getCurrent().getPollution().getTs());
-        mDustTextView.setText(finedust.getData().getCurrent().getPollution().getAqius().toString());
+            mTimeTextView.setText(finedust.getData().getCurrent().getPollution().getTs());
+            Integer dust_aqi = finedust.getData().getCurrent().getPollution().getAqius();
+            mDustTextView.setText(dust_aqi.toString());
+
+            if (dust_aqi >= 0 && dust_aqi <= 50){
+                mDustImageView.setImageResource(R.drawable.face1);
+                mDustLayout.setBackgroundColor(Color.YELLOW);
+
+            }
+            else if (dust_aqi >= 51 && dust_aqi <= 100){
+                mDustImageView.setImageResource(R.drawable.face2);
+                mDustLayout.setBackgroundResource(R.color.face2);
+
+
+            }
+            else if (dust_aqi >= 101 && dust_aqi <= 150){
+                mDustImageView.setImageResource(R.drawable.face3);
+                mDustLayout.setBackgroundResource(R.color.face3);
+
+            }
+            else if (dust_aqi >= 151 && dust_aqi <= 200){
+                mDustImageView.setImageResource(R.drawable.face4);
+                mDustLayout.setBackgroundResource(R.color.face4);
+
+            }
+            else if (dust_aqi >= 201 && dust_aqi <= 300){
+                mDustImageView.setImageResource(R.drawable.face5);
+                mDustLayout.setBackgroundResource(R.color.face5);
+
+            }
+            else{
+                mDustImageView.setImageResource(R.drawable.face6);
+                mDustLayout.setBackgroundResource(R.color.face6);
+
+            }
+
+
+
+        }
+
+
+
     }
 
     @Override
