@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         // google place autocomplete api
         //initialize places
-        Places.initialize(getApplicationContext(), "AIzaSyAc1H5wBKE8BoiZkcFz4Mj_GymmnOlKbP4");
+        Places.initialize(getApplicationContext(), BuildConfig.GOOGLE_API_KEY);
 
         //set edittext non focusable
         mCityName.setFocusable(false);

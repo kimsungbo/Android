@@ -1,5 +1,6 @@
 package com.sungbo.dustinfo.data;
 
+import com.sungbo.dustinfo.BuildConfig;
 import com.sungbo.dustinfo.model.dust_material.FineDust;
 import com.sungbo.dustinfo.util.FineDustUtil;
 
@@ -10,7 +11,7 @@ public class LocationFineDustRepository implements FineDustRepository{
     private FineDustUtil mFineDustUtil;
     private double mLatitude;
     private double mLongitude;
-    private static String APPKEY = "0835c535-13fc-4b02-b0c1-9b33f766e71c";
+    private static String APPKEY = BuildConfig.AIRVIRUS_API_KEY;
 
     public LocationFineDustRepository(){
         mFineDustUtil = new FineDustUtil();
