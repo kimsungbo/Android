@@ -1,35 +1,41 @@
 package com.sungbo.dustinfo;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
+import android.content.Intent;
 import android.graphics.Color;
-import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.NavigationView;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.view.ViewPager;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+
+import com.google.android.gms.common.api.Status;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.widget.Autocomplete;
+import com.google.android.libraries.places.widget.AutocompleteActivity;
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment;
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener;
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.tabs.TabLayout;
+
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.core.view.GravityCompat;
+import androidx.viewpager.widget.ViewPager;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.util.Pair;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -40,6 +46,7 @@ import com.sungbo.dustinfo.finedust.FineDustFragment;
 import com.sungbo.dustinfo.util.GeoUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import io.realm.Realm;
@@ -53,7 +60,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private TabLayout mTabLayout;
     private Realm mRealm;
     private ImageView mSearchButton;
-    private AutoCompleteTextView mCityName;
+    private EditText mCityName;
+
+    private static int AUTOCOMPLETE_REQUEST_CODE = 1;
 
     // 사용자 위치 수신기
     private LocationManager locationManager;
@@ -81,18 +90,40 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mSearchButton = (ImageView) findViewById(R.id.search_button);
-        mCityName = (AutoCompleteTextView) findViewById(R.id.main_search);
 
-        mCityName.setAdapter(new ArrayAdapter<String>(this,
-                android.R.layout.simple_dropdown_item_1line, cities) {
+        mSearchButton = (ImageView) findViewById(R.id.search_button);
+        mCityName = (EditText) findViewById(R.id.main_search);
+
+
+//        // 리스트를 활용한 autocomplete
+//        mCityName.setAdapter(new ArrayAdapter<String>(this,
+//                android.R.layout.simple_dropdown_item_1line, cities) {
+//            @Override
+//            public View getView(int position, View convertView, ViewGroup parent) {
+//                TextView textView = (TextView) super.getView(position, convertView, parent);
+//                textView.setBackgroundColor(Color.WHITE);
+//                return textView;
+//            }
+//        });
+
+
+        // google place autocomplete api
+        //initialize places
+        Places.initialize(getApplicationContext(), "AIzaSyAc1H5wBKE8BoiZkcFz4Mj_GymmnOlKbP4");
+
+        //set edittext non focusable
+        mCityName.setFocusable(false);
+        mCityName.setOnClickListener(new View.OnClickListener() {
             @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                TextView textView = (TextView) super.getView(position, convertView, parent);
-                textView.setBackgroundColor(Color.WHITE);
-                return textView;
+            public void onClick(View v) {
+                List<Place.Field> fieldList = Arrays.asList(Place.Field.ADDRESS,
+                        Place.Field.LAT_LNG, Place.Field.NAME);
+
+                Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fieldList).build(MainActivity.this);
+                startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
             }
         });
+
 
         mSearchButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -109,12 +140,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
                         @Override
                         public void onError(String message) {
-                            Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "지역을 선택하여 주세요", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
             }
         });
+
+
 
         mRealm = Realm.getDefaultInstance();
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -157,6 +190,43 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         setUpViewPager();
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                final Place place = Autocomplete.getPlaceFromIntent(data);
+
+                GeoUtil.getLocationFromName(MainActivity.this, place.getName(), new GeoUtil.GeoUtilListener() {
+                    @Override
+                    public void onSuccess(double lat, double lng) {
+                        saveNewCity(lat, lng, place.getName());
+                        addNewFragement(lat, lng, place.getName());
+
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+
+
+                //Log.i(TAG, "Place: " + place.getName() + ", " + place.getId());
+            } else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
+                // TODO: Handle the error.
+                Status status = Autocomplete.getStatusFromIntent(data);
+                Log.d("autocomplete", status.getStatusMessage());
+            } else if (resultCode == RESULT_CANCELED) {
+                // The user canceled the operation.
+                Log.d("autocomplete", "cancelled");
+
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void setUpViewPager() {
