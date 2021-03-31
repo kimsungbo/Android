@@ -11,7 +11,7 @@ public class LocationFineDustRepository implements FineDustRepository{
     private FineDustUtil mFineDustUtil;
     private double mLatitude;
     private double mLongitude;
-    private static String APPKEY = BuildConfig.AIRVIRUS_API_KEY;
+    private static String APPKEY = BuildConfig.AIRVISUAL_API_KEY;
 
     public LocationFineDustRepository(){
         mFineDustUtil = new FineDustUtil();

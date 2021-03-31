@@ -7,6 +7,8 @@ import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -76,13 +78,13 @@ public class FineDustFragment extends Fragment implements FineDustContract.View 
 
         mSwipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setColorSchemeColors(Color.RED, Color.YELLOW, Color.BLUE);
-        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                mPresenter.loadFineDustData();
-
-            }
-        });
+//        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                mPresenter.loadFineDustData();
+//
+//            }
+//        });
         return view;
     }
 
@@ -102,13 +104,21 @@ public class FineDustFragment extends Fragment implements FineDustContract.View 
             String location = finedust.getData().getCountry() + ", " + finedust.getData().getState() + ", " + finedust.getData().getCity();
             mLocationTextView.setText(location);
 
-            mTimeTextView.setText(finedust.getData().getCurrent().getPollution().getTs());
+            String time =  finedust.getData().getCurrent().getPollution().getTs();
+            mTimeTextView.setText(time.substring(0, 10) + " " + time.substring(11, 19));
+
+
+
             Integer dust_aqi = finedust.getData().getCurrent().getPollution().getAqius();
+
+            Log.d("FineDustFragment", dust_aqi.toString());
+
+
             mDustTextView.setText(dust_aqi.toString());
 
             if (dust_aqi >= 0 && dust_aqi <= 50){
                 mDustImageView.setImageResource(R.drawable.face1);
-                mDustLayout.setBackgroundColor(Color.YELLOW);
+                mDustLayout.setBackgroundResource(R.color.face1);
 
             }
             else if (dust_aqi >= 51 && dust_aqi <= 100){
@@ -128,11 +138,13 @@ public class FineDustFragment extends Fragment implements FineDustContract.View 
 
             }
             else if (dust_aqi >= 201 && dust_aqi <= 300){
+
                 mDustImageView.setImageResource(R.drawable.face5);
                 mDustLayout.setBackgroundResource(R.color.face5);
 
             }
-            else{
+            else if (dust_aqi > 300){
+
                 mDustImageView.setImageResource(R.drawable.face6);
                 mDustLayout.setBackgroundResource(R.color.face6);
 

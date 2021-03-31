@@ -16,7 +16,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField "String", "GOOGLE_API_KEY", properties['google.places.api.key']
-        buildConfigField "String", "AIRVIRUS_API_KEY", properties['airvirus.api.key']
+        buildConfigField "String", "AIRVISUAL_API_KEY", properties['airvisual.api.key']
     }
     buildTypes {
         release {
