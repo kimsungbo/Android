@@ -1,5 +1,6 @@
 package com.sungbo.letsreadnews;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -7,8 +8,17 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+import android.icu.text.SearchIterator;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.SearchView;
+import android.widget.Toolbar;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -35,10 +45,11 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView.LayoutManager mLayoutManager;
 
     private NewsUtil newsUtil;
-
-    private String[] myDataset = {"1", "2"};
-
     private RequestQueue queue;
+    private SearchView searchView;
+    private List<NewsData> news_list;
+    private MenuItem searchItem;
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
 
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
+
+        newsUtil = new NewsUtil();
 
 
         getNews();
@@ -129,8 +142,98 @@ public class MainActivity extends AppCompatActivity {
 //        queue.add(stringRequest);
 //    }
 
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu);
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+
+        searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchItem = menu.findItem(R.id.action_search);
+
+        searchView.setQueryHint("검색어를 입력하여 주세요");
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                getNewsWithKeyWord(s);
+                searchView.onActionViewCollapsed();
+
+
+
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                return false;
+            }
+        });
+
+        searchView.setOnCloseListener(new SearchView.OnCloseListener() {
+            @Override
+            public boolean onClose() {
+                menu.findItem(R.id.action_search).collapseActionView();
+                return true;
+            }
+        });
+
+
+
+
+        return true;
+    }
+
+
+    public void getNewsWithKeyWord(String keyword){
+        newsUtil.getApi().getNewsWithKeyword(keyword, "publishedAt", BuildConfig.NEWS_API_KEY).enqueue(new Callback<News>() {
+            @Override
+            public void onResponse(Call<News> call, Response<News> response) {
+                News news = new News();
+                news = response.body();
+                Log.d("MainActivity", news.getArticles().get(0).getTitle());
+
+                news_list.clear();
+
+                for(int i = 0 ; i < news.getArticles().size(); i++){
+
+                    NewsData newsData = new NewsData();
+
+                    newsData.setTitle(news.getArticles().get(i).getTitle());
+
+                    String url = "";
+                    if ( news.getArticles().get(i).getUrlToImage() != null && news.getArticles().get(i).getUrlToImage().substring(0, 5).equals("http:")){
+                        url = "https:" + news.getArticles().get(i).getUrlToImage().substring(5);
+                    }
+                    else{
+                        url = news.getArticles().get(i).getUrlToImage();
+                    }
+
+
+                    newsData.setUrlToImage(url);
+                    newsData.setContent((String) news.getArticles().get(i).getDescription());
+                    newsData.setInternetUrl(news.getArticles().get(i).getUrl());
+
+                    news_list.add(newsData);
+                }
+
+
+                mAdapter.notifyDataSetChanged();
+
+            }
+
+            @Override
+            public void onFailure(Call<News> call, Throwable t) {
+                Log.d("MainActivity", "failed");
+
+
+            }
+        });
+    }
+
     public void getNews(){
-        newsUtil = new NewsUtil();
         newsUtil.getApi().getNews("kr", BuildConfig.NEWS_API_KEY).enqueue(new Callback<News>() {
             @Override
             public void onResponse(Call<News> call, Response<News> response) {
@@ -138,14 +241,23 @@ public class MainActivity extends AppCompatActivity {
                 news = response.body();
                 Log.d("MainActivity", news.getArticles().get(0).getTitle());
 
-                List<NewsData> news_list = new ArrayList<NewsData>();
+                news_list = new ArrayList<NewsData>();
 
                 for(int i = 0 ; i < news.getArticles().size(); i++){
 
                         NewsData newsData = new NewsData();
 
                         newsData.setTitle(news.getArticles().get(i).getTitle());
-                        newsData.setUrlToImage(news.getArticles().get(i).getUrlToImage());
+
+                        String url;
+                        if ( news.getArticles().get(i).getUrlToImage() != null && news.getArticles().get(i).getUrlToImage().substring(0, 5).equals("http:")){
+                            url = "https:" + news.getArticles().get(i).getUrlToImage().substring(5);
+                        }
+                        else{
+                            url = news.getArticles().get(i).getUrlToImage();
+                        }
+
+                        newsData.setUrlToImage(url);
                         newsData.setContent((String) news.getArticles().get(i).getDescription());
                         newsData.setInternetUrl(news.getArticles().get(i).getUrl());
 

@@ -49,6 +49,8 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.ViewHolder> {
         public TextView getTextView() {
             return newsTitle;
         }
+
+
     }
 
     /**
@@ -67,6 +69,10 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.ViewHolder> {
 
         Fresco.initialize(context);;
     }
+    public void setItems(List<NewsData> dataSet){
+        news_list = dataSet;
+    }
+
 
     // Create new views (invoked by the layout manager)
     @Override
@@ -89,9 +95,13 @@ public class NewsAdapter extends RecyclerView.Adapter<NewsAdapter.ViewHolder> {
         }
 
         if (news.getUrlToImage() != null){
-            Log.d("News Adapter", news.getUrlToImage());
+
             Uri uri = Uri.parse(news.getUrlToImage());
             viewHolder.newsImage.setImageURI(uri);
+        }
+
+        else{
+            viewHolder.newsImage.setImageResource(R.drawable.noimage);
         }
 
         viewHolder.cardView.setOnClickListener(new View.OnClickListener() {

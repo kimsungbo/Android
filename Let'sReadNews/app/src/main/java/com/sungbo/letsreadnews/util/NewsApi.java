@@ -13,6 +13,10 @@ public interface NewsApi {
     Call<News> getNews(@Query("country") String country,
                        @Query("apiKey") String key);
 
+    @GET("v2/everything")
+    Call<News> getNewsWithKeyword(@Query("q") String keyword,
+                                  @Query("sortBy") String sort,
+                                  @Query("apiKey") String key);
 
 
 }
