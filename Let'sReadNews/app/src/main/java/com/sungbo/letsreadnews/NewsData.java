@@ -6,6 +6,7 @@ public class NewsData implements Serializable {
     private String title;
     private String urlToImage;
     private String content;
+    private String internetUrl;
 
     public String getInternetUrl() {
         return internetUrl;
@@ -15,7 +16,6 @@ public class NewsData implements Serializable {
         this.internetUrl = internetUrl;
     }
 
-    private String internetUrl;
 
     public String getTitle() {
         return title;

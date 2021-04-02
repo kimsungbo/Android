@@ -17,7 +17,5 @@ public interface NewsApi {
     Call<News> getNewsWithKeyword(@Query("q") String keyword,
                                   @Query("sortBy") String sort,
                                   @Query("apiKey") String key);
-
-
 }
 
