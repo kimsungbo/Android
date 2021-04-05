@@ -1,0 +1,20 @@
+package com.sungbo.findtheway.data;
+
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
+public class Polyline__1 {
+
+    @SerializedName("points")
+    @Expose
+    private String points;
+
+    public String getPoints() {
+        return points;
+    }
+
+    public void setPoints(String points) {
+        this.points = points;
+    }
+
+}

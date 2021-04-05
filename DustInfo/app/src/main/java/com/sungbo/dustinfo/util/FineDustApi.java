@@ -9,7 +9,7 @@ import retrofit2.http.Headers;
 import retrofit2.http.Query;
 
 public interface FineDustApi {
-    String BASE_URL = "https://api.airvisual.com/";
+    String BASE_URL = "https://maps.googleapis.com/maps/api/directions/json?";
 
     @GET("v2/nearest_city?")
     Call<FineDust> getFineDust(@Query("lat") double latitude,
