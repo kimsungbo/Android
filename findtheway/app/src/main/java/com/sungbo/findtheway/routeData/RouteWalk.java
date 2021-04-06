@@ -41,6 +41,10 @@ public class RouteWalk {
     }
 
     public String getDirection(){
+        if (instruction.equals("최종목적지")){
+            return duration + "분간 " + travel_mode + "으로 " + distance + "를 이동하여 " + instruction +"도착. ";
+
+        }
         return duration + "분간 " + travel_mode + "으로 " + distance + "를 이동하여 " + instruction +". ";
     }
 }

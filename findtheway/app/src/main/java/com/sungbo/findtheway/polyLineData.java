@@ -1,5 +1,8 @@
 package com.sungbo.findtheway;
 
+import android.content.Context;
+import android.location.Geocoder;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.sungbo.findtheway.data.Direction;
 import com.sungbo.findtheway.data.Step;
@@ -8,11 +11,36 @@ import com.sungbo.findtheway.routeData.RouteWalk;
 
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 public class polyLineData {
+
+    public static HashMap<String, LatLng> getMarkerPoint(Direction direction, Context context){
+        HashMap<String, LatLng> list = new HashMap<>();
+
+        List<Step> step = direction.getRoutes().get(0).getLegs().get(0).getSteps();
+
+        Geocoder geocoder = new Geocoder(context, Locale.getDefault());
+
+        String markerTitle = "";
+
+        for(int i = 0 ; i < step.size(); i++){
+            LatLng latlng = new LatLng(step.get(i).getEndLocation().getLat(), step.get(i).getEndLocation().getLng());
+            try {
+                markerTitle = geocoder.getFromLocation(latlng.latitude, latlng.longitude, 1).get(0).getAddressLine(0);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            list.put(markerTitle, latlng);
+        }
+
+        return list;
+    }
 
 
     public static List<LatLng> getPolyLines(Direction direction) {

@@ -87,12 +87,19 @@ public class RouteTransit {
 
     public String getDirection(){
         String s = "";
-        if (travel_type == "SUBWAY"){
-            s = "지하철 " + line + "을 타고 " + departure_station +"에서" + arrival_station +"으로 총 " + duration + "분간 " + num_stations +"정거장 이동. ";
+        if (travel_type.equals("SUBWAY")){
+            s = "지하철 " + line + "을 타고 " + departure_station +"에서 " + arrival_station +"역으로 총 " + duration + "분간 " + num_stations +"정거장 이동";
         }
         else{
-            s = "버스 " + line + "를 타고 " + departure_station +"에서 " + arrival_station +"으로 총 " + duration + "분간 " + num_stations +"정거장 이동. ";
+            s = "버스 " + line + "를 타고 " + departure_station +"에서 " + arrival_station +"역으로 총 " + duration + "분간 " + num_stations +"정거장 이동";
 
+        }
+
+        if (instruction.equals("최종목적지")){
+            s += "하여 최종목적지 도착. ";
+        }
+        else{
+            s += ". ";
         }
 
         return s;

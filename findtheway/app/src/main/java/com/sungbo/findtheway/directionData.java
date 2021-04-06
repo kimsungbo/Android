@@ -24,13 +24,28 @@ public class directionData {
                 routeWalk.setDistance(s.getDistance().getText());
                 routeWalk.setDuration(s.getDuration().getText().split(" ")[0]);
                 routeWalk.setTravel_mode(s.getTravelMode());
-                routeWalk.setInstruction(s.getHtmlInstructions());
+
+                if (i == step.size() - 1) {
+                    routeWalk.setInstruction("최종목적지");
+
+                }
+                else{
+                    routeWalk.setInstruction(s.getHtmlInstructions());
+
+                }
 
                 return_string += routeWalk.getDirection();
             }
             else if (s.getTravelMode().equals("TRANSIT")){
                 RouteTransit routeTransit = new RouteTransit();
-                routeTransit.setInstruction(s.getHtmlInstructions());
+                if (i == step.size() - 1) {
+                    routeTransit.setInstruction("최종목적지");
+
+                }
+                else{
+                    routeTransit.setInstruction(s.getHtmlInstructions());
+
+                }
                 routeTransit.setArrival_station(s.getTransitDetails().getArrivalStop().getName());
                 routeTransit.setDeparture_station(s.getTransitDetails().getDepartureStop().getName());
                 routeTransit.setTravel_mode(s.getTravelMode());

@@ -30,6 +30,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -42,8 +43,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static android.speech.tts.TextToSpeech.ERROR;
@@ -76,11 +79,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 
-public class MainActivity extends AppCompatActivity implements SensorEventListener, TextToSpeech.OnInitListener , OnMapReadyCallback{
+public class MainActivity extends AppCompatActivity implements SensorEventListener, TextToSpeech.OnInitListener, OnMapReadyCallback{
 
     private TextView textView;
     private boolean tellCurrentAddress = false;
     private String destination_name = "";
+    private LatLng destination_latlng;
 
     // 흔들림감지
     private SensorManager sensorManager;
@@ -172,28 +176,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         this.googleMap = googleMap;
         setDefaultLocation();
 
-        int hasFineLocationPermission = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION);
-        int hasCoarseLocationPermission = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_COARSE_LOCATION);
-
+        int hasFineLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        int hasCoarseLocationPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
 
 
         if (hasFineLocationPermission == PackageManager.PERMISSION_GRANTED &&
                 hasCoarseLocationPermission == PackageManager.PERMISSION_GRANTED   ) {
 
             // 2. 이미 퍼미션을 가지고 있다면
-            // ( 안드로이드 6.0 이하 버전은 런타임 퍼미션이 필요없기 때문에 이미 허용된 걸로 인식합니다.)
-
-
+            // ( 안드로이드 6.0 이하 버전은 런타임 퍼미션이 필요없기 때문에 이미 허용된 걸로 인식합니다.
             startLocationUpdates(); // 3. 위치 업데이트 시작
 
 
         }else {  //2. 퍼미션 요청을 허용한 적이 없다면 퍼미션 요청이 필요합니다. 2가지 경우(3-1, 4-1)가 있습니다.
-
             // 3-1. 사용자가 퍼미션 거부를 한 적이 있는 경우에는
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, REQUIRED_PERMISSIONS[0])) {
-
                 // 3-2. 요청을 진행하기 전에 사용자가에게 퍼미션이 필요한 이유를 설명해줄 필요가 있습니다.
                 Snackbar.make(mLayout, "이 앱을 실행하려면 위치 접근 권한이 필요합니다.",
                         Snackbar.LENGTH_INDEFINITE).setAction("확인", new View.OnClickListener() {
@@ -217,12 +214,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         }
 
-
-
         googleMap.getUiSettings().setMyLocationButtonEnabled(true);
         // 현재 오동작을 해서 주석처리
-
-        //mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
         googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
 
             @Override
@@ -298,9 +291,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 currentLocationInitialized = true;
             }
 
-
-
-
         }
 
     };
@@ -359,7 +349,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Address address = addresses.get(0);
             Log.d("geocoder", address.getAddressLine(0).toString());
             if (tellCurrentAddress == false){
-                readText("현재 위치는 " + address.getAddressLine(0).toString() + "입니다. 휴대폰을 흔들어 목적지를 입력해 주세요.");
+                readText("현재 위치는 " + address.getAddressLine(0).toString() + "입니다. 휴대폰을 흔들어 목적지를 입력해 주세요.", "CURRENT_LOCATION");
                 tellCurrentAddress = true;
             }
             return address.getAddressLine(0).toString();
@@ -446,6 +436,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 // 퍼미션을 허용했다면 위치 업데이트를 시작합니다.
                 startLocationUpdates();
+
+
             }
             else {
                 // 거부한 퍼미션이 있다면 앱을 사용할 수 없는 이유를 설명해주고 앱을 종료합니다.2 가지 경우가 있습니다.
@@ -579,7 +571,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
                 Log.d("MainActivity", "Shake 탐지");
 
-                textView.setText("shake 탐지");
+                //textView.setText("shake 탐지");
+
+                googleMap.clear();
+
+                String markerTitle = getCurrentAddress(currentPosition);
+
+                String markerSnippet = "위도:" + String.valueOf(location.getLatitude())
+                        + " 경도:" + String.valueOf(location.getLongitude());
+                setCurrentLocation(location, markerTitle, markerSnippet );
+
                 getDestination();
 
             }
@@ -667,7 +668,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     message = "알 수 없는 오류임";
                     break;
             }
-            readText("에러가 발생하였습니다. " + message);
+            readText("에러가 발생하였습니다. " + message, "ERROR");
             Toast.makeText(getApplicationContext(), "에러가 발생하였습니다. : " + message,Toast.LENGTH_SHORT).show();
         }
 
@@ -682,8 +683,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
 
             destination_name = result;
-            readText(result + "으로 길찾기 시작");
-            findWay(result);
+            readText(result + "으로 길찾기 시작", "FIND_WAY");
+
         }
 
         @Override
@@ -719,6 +720,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 double des_lon = addr.getLongitude();
 
                 destination = des_lat + "," + des_lon;
+                destination_latlng = new LatLng(des_lat, des_lon);
             }
         }
         Log.d("destination", destination);
@@ -733,20 +735,44 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 if (direction != null){
                     String s = directionData.getRoutes(direction);
                     List<LatLng> polylines = polyLineData.getPolyLines(direction);
-                    Log.d("direction", s);
+                    System.out.println("direction");
+                    System.out.println(s);
                     System.out.println(polylines);
 
-                    PolylineOptions options = new PolylineOptions().width(5).color(Color.BLUE).geodesic(true);
+                    PolylineOptions options = new PolylineOptions().width(8).color(Color.BLUE).geodesic(true);
                     for (int z = 0; z < polylines.size(); z++) {
                         LatLng point = polylines.get(z);
                         options.add(point);
                     }
-                    googleMap.addPolyline(options);
-                    googleMap.addMarker(new MarkerOptions()
-                            .position(polylines.get(polylines.size() - 1))
-                            .title(destination_name));
 
-                    readText(s);
+                    googleMap.addPolyline(options);
+
+
+                    HashMap<String, LatLng> marker_list = polyLineData.getMarkerPoint(direction, MainActivity.this);
+
+                    System.out.println("marker_list" + marker_list);
+                    Iterator it = marker_list.entrySet().iterator();
+                    while (it.hasNext()) {
+                        Map.Entry pair = (Map.Entry)it.next();
+                        System.out.println(pair.getKey());
+                        System.out.println(pair.getValue());
+                        System.out.println(destination_latlng);
+
+                        if(((LatLng)pair.getValue()).latitude == (double)Math.round(destination_latlng.latitude*10000000)/10000000
+                        && ((LatLng)pair.getValue()).longitude == (double)Math.round(destination_latlng.longitude*10000000)/10000000){
+                            googleMap.addMarker(new MarkerOptions()
+                                    .position((LatLng) pair.getValue())
+                                    .title(destination_name));
+                        }
+                        else{
+                            googleMap.addMarker(new MarkerOptions()
+                                    .position((LatLng) pair.getValue())
+                                    .title((String) pair.getKey()));
+                        }
+
+                    }
+
+                    readText(s, "SPEAK_ROUTE");
                 }
 
 
@@ -760,13 +786,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    public void readText(String text){
-        tts.speak(text,TextToSpeech.QUEUE_FLUSH, null, null);
+    public void readText(String text, String utteranceId){
+        tts.speak(text,TextToSpeech.QUEUE_FLUSH, null, utteranceId);
     }
+
+
+
 
     @Override
     public void onInit(int status) {
+        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String utteranceId) {
+
+            }
+
+            @Override
+            public void onDone(String utteranceId) {
+                if (utteranceId.equals( "FIND_WAY")){
+                    findWay(destination_name);
+                }
+            }
+
+            @Override
+            public void onError(String utteranceId) {
+
+            }
+        });
         if (status != ERROR){
+
             Log.d("MainActivity", "TTS initialization no error");
             // 언어를 선택한다.
             tts.setLanguage(Locale.KOREAN);
@@ -782,6 +830,5 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
     }
-
 
 }

@@ -13,10 +13,15 @@
         android:orientation="vertical">
 
         <TextView
+            android:paddingTop="10dp"
             android:id="@+id/text_view"
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:text="Hello World!"
+            android:fontFamily="sans-serif-condensed"
+            android:layout_gravity="center"
+            android:text="휴대폰을 흔들어 목적지를 입력해 주세요"
+            android:textAlignment="center"
+            android:textSize="20sp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
